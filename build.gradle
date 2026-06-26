@@ -18,8 +18,6 @@ sourceSets {
     main {
         java {
             // Sodium config API (changed in Sodium 0.6.x)
-            exclude 'me/cortex/voxy/client/config/SodiumConfigBuilder.java'
-            exclude 'me/cortex/voxy/client/config/VoxyConfigMenu.java'
             exclude 'me/cortex/voxy/client/config/IConfigPageSetter.java'
 
             // ModMenu integration (Fabric-only)
