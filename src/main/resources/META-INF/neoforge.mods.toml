@@ -54,3 +54,6 @@ config="iris.voxy.mixins.json"
 
 [[mixins]]
 config="common.voxy.mixins.json"
+
+[modproperties.voxy]
+"sodium:config_api_user"="me.cortex.voxy.client.config.VoxyConfigMenu"
