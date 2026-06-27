@@ -116,10 +116,6 @@ vec4 computeColour(vec2 texturePos, vec4 colour) {
 
 #ifdef TRANSLUCENT
 float computeVanillaWaterHandoffFade() {
-    // fragmentCameraPos is relative to the 32-block render section origin;
-    // cameraSubPos is the camera position inside that same 32-block section.
-    // Horizontal vanilla/LOD handoff should be chunk-snapped. The old circular
-    // distance handoff overlaps with Sodium's chunk-column based water render.
     vec3 cameraRelative = fragmentCameraPos - cameraSubPos;
 
     ivec2 cameraChunkLocal = ivec2(floor(cameraSubPos.xz / 16.0));
@@ -130,28 +126,36 @@ float computeVanillaWaterHandoffFade() {
     float chunkDistance = float(max(abs(relativeChunk.x), abs(relativeChunk.y)));
     float fadeWidthChunks = max(1.0, uTranslucentFadeWidth / 16.0);
 
-    // Keep Voxy water outside the vanilla-owned edge. If this value is too low,
-    // individual vanilla water chunks can briefly overlap with Voxy water.
     const float VANILLA_WATER_SAFETY_MARGIN_CHUNKS = 1.25;
 
-    // 0 inside vanilla-owned chunk columns, 1 outside the vanilla handoff band.
     float chunkFade = smoothstep(vanillaChunks + VANILLA_WATER_SAFETY_MARGIN_CHUNKS,
                                  vanillaChunks + VANILLA_WATER_SAFETY_MARGIN_CHUNKS + fadeWidthChunks,
                                  chunkDistance);
 
-    // High-altitude fallback must NOT use length(cameraRelative). A spherical
-    // 3D fade moves with the player's x/z position and reintroduces small,
-    // player-following overlap patches. Use vertical distance only, and only in
-    // the inner vanilla area where the old high-altitude circular water hole was
-    // visible. Near the vanilla/Voxy border, let chunkFade own the transition.
-    const float HIGH_ALTITUDE_INNER_MARGIN_CHUNKS = 2.0;
-    float innerVanillaArea = 1.0 - smoothstep(vanillaChunks - HIGH_ALTITUDE_INNER_MARGIN_CHUNKS,
-                                              vanillaChunks - 0.5,
-                                              chunkDistance);
+    /*
+     * High-altitude fallback:
+     *
+     * Vanilla water at high altitude behaves closer to a circular/screen-distance
+     * region, while the normal Voxy/vanilla handoff should still be chunk based.
+     *
+     * Do not use the square chunkDistance here, otherwise the fallback hole becomes
+     * rectangular. Use horizontal circular distance for the high-altitude fallback
+     * gate, but keep a safety margin so it does not reintroduce overlap right at
+     * the vanilla/Voxy boundary.
+     */
+    float horizontalDistance = length(cameraRelative.xz);
 
-    float verticalFallback = smoothstep(uVanillaRenderDistance,
-                                        uVanillaRenderDistance + uTranslucentFadeWidth,
-                                        abs(cameraRelative.y)) * innerVanillaArea;
+    const float HIGH_ALTITUDE_CIRCLE_MARGIN_BLOCKS = 32.0;
+
+    float highAltitudeInnerCircle =
+            1.0 - smoothstep(uVanillaRenderDistance - HIGH_ALTITUDE_CIRCLE_MARGIN_BLOCKS,
+                              uVanillaRenderDistance,
+                              horizontalDistance);
+
+    float verticalFallback =
+            smoothstep(uVanillaRenderDistance,
+                       uVanillaRenderDistance + uTranslucentFadeWidth,
+                       abs(cameraRelative.y)) * highAltitudeInnerCircle;
 
     return max(chunkFade, verticalFallback);
 }
