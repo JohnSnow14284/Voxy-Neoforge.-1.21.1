@@ -77,6 +77,20 @@ public class VoxyConfigMenu implements ConfigEntryPoint {
                                         ()->CFG.ingestEnabled, v->CFG.ingestEnabled=v)
                         )
                 ).setEnabler("voxy:enabled"),
+                new Page(Component.translatable("voxy.config.fakesight"),
+                        new Group(
+                                new BoolOption(
+                                        "voxy:fakesight_enabled",
+                                        Component.translatable("voxy.config.fakesight.enabled"),
+                                        ()->CFG.enableExtendedRequestDistance, v->CFG.enableExtendedRequestDistance=v),
+                                new IntOption(
+                                        "voxy:fakesight_distance",
+                                        Component.translatable("voxy.config.fakesight.distance"),
+                                        ()->CFG.requestDistance, v->CFG.requestDistance=v,
+                                        new Range(8, 127, 1))
+                                        .setFormatter(v->Component.literal(Integer.toString(v)))
+                        )
+                ).setEnabler("voxy:enabled"),
                 new Page(Component.translatable("voxy.config.rendering"),
                         new Group(
                                 new BoolOption(
