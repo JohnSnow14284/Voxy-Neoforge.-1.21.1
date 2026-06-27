@@ -45,6 +45,12 @@ public class VoxyConfig {
     // Inspired by Distant Horizons' earth curvature feature
     public int earthCurveRatio = 0;
 
+    // FakeSight integration: report/request a larger server-side chunk distance for LOD ingestion.
+    // This does not change Voxy's LOD render distance; it only asks the server/integrated server
+    // to keep more real chunks available so Voxy can ingest them.
+    public boolean enableExtendedRequestDistance = true;
+    public int requestDistance = 48;
+
     private static VoxyConfig loadOrCreate() {
         if (VoxyCommon.isAvailable()) {
             var path = getConfigPath();
