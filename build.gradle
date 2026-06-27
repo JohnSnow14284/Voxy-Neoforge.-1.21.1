@@ -196,8 +196,6 @@ dependencies {
     // To change the versions see the gradle.properties file
     implementation "net.neoforged:neoforge:${project.neoforge_version}"
 
-    // Forgified Fabric API for compatibility (includes Fabric Loader API)
-    implementation "org.sinytra.forgified-fabric-api:forgified-fabric-api:${project.forgified_fabric_version}"
 
     // Sodium for NeoForge (matches the 0.8 alpha used by the target modpack)
     sodiumDistribution "maven.modrinth:sodium:${sodiumVersion}"
