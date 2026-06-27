@@ -47,7 +47,7 @@ public class VoxyNeoForgeConfig {
     private static final ModConfigSpec.DoubleValue SUB_DIVISION_SIZE = BUILDER
             .comment("Subdivision size for LOD rendering (28-256)",
                      "Lower = more detailed LODs but more GPU load")
-            .defineInRange("subDivisionSize", 64.0, 28.0, 256.0);
+            .defineInRange("subDivisionSize", 28.0, 28.0, 256.0);
 
     // Visual settings
     private static final ModConfigSpec.BooleanValue USE_ENVIRONMENTAL_FOG = BUILDER
