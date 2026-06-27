@@ -191,7 +191,13 @@ void main() {
     #ifdef TRANSLUCENT
     float fadeStart = max(0.0, uVanillaRenderDistance - uTranslucentFadeWidth);
     float fadeEnd = uVanillaRenderDistance + uTranslucentFadeWidth;
-    float fade = smoothstep(fadeStart, fadeEnd, length(fragmentCameraPos.xz));
+    // Use full 3D camera distance for the vanilla translucent handoff.
+    // Sodium/vanilla may stop drawing water sections below the player when the
+    // camera is very high because those sections are far in 3D, even though
+    // their horizontal xz distance is still inside the vanilla render distance.
+    // If Voxy fades its translucent LODs only by xz distance, this creates a
+    // circular region where both vanilla water and Voxy water are absent.
+    float fade = smoothstep(fadeStart, fadeEnd, length(fragmentCameraPos.xyz));
     colour.a *= fade;
     if (colour.a <= 0.0039f) {
         discard;
@@ -230,7 +236,13 @@ void main() {
     #ifdef TRANSLUCENT
     float fadeStart = max(0.0, uVanillaRenderDistance - uTranslucentFadeWidth);
     float fadeEnd = uVanillaRenderDistance + uTranslucentFadeWidth;
-    float fade = smoothstep(fadeStart, fadeEnd, length(fragmentCameraPos.xz));
+    // Use full 3D camera distance for the vanilla translucent handoff.
+    // Sodium/vanilla may stop drawing water sections below the player when the
+    // camera is very high because those sections are far in 3D, even though
+    // their horizontal xz distance is still inside the vanilla render distance.
+    // If Voxy fades its translucent LODs only by xz distance, this creates a
+    // circular region where both vanilla water and Voxy water are absent.
+    float fade = smoothstep(fadeStart, fadeEnd, length(fragmentCameraPos.xyz));
     colour.a *= fade;
     if (colour.a <= 0.0039f) {
         discard;
