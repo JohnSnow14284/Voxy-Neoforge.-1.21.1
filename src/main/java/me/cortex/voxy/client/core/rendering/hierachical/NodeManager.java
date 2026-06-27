@@ -385,9 +385,24 @@ public class NodeManager {
             }
 
             //Just need to update the child node data, nothing else
-            this.nodeData.setNodeChildExistence(nodeId&NODE_ID_MSK, childExistence);
+            int leafNodeId = nodeId & NODE_ID_MSK;
+            this.nodeData.setNodeChildExistence(leafNodeId, childExistence);
+
+            // If this leaf currently has no renderable parent geometry but now reports
+            // non-empty children, do not wait for the GPU traversal to rediscover and
+            // request the children. That state is exactly what shows up as a persistent
+            // empty LOD hole: the parent cannot be drawn, and the child request may not
+            // be emitted again until the camera happens to look at it in the right way.
+            if (childExistence != 0
+                    && WorldEngine.getLevel(pos) != 0
+                    && !this.nodeData.isNodeRequestInFlight(leafNodeId)
+                    && this.nodeData.getNodeGeometry(leafNodeId) == EMPTY_GEOMETRY_ID) {
+                this.nodeData.markRequestInFlight(leafNodeId);
+                this.makeLeafChildRequest(leafNodeId);
+            }
+
             //Need to resubmit to gpu
-            this.invalidateNode(nodeId&NODE_ID_MSK);//TODO:FIXME: Do we???
+            this.invalidateNode(leafNodeId);//TODO:FIXME: Do we???
         }
     }
 
