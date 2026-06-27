@@ -85,7 +85,7 @@ float computeTranslucentHandoffFade() {
     // directly below the player because the true 3D distance is too large. The
     // vertical override keeps Voxy water visible in that case without forcing Voxy
     // water to overlap vanilla water during normal low-altitude flight.
-    float horizontalDistance = length(fragmentCameraPos.xz);
+    float horizontalDistance = max(abs(fragmentCameraPos.x), abs(fragmentCameraPos.z));
     float verticalDistance = abs(fragmentCameraPos.y);
 
     float fadeStart = uVanillaRenderDistance;
