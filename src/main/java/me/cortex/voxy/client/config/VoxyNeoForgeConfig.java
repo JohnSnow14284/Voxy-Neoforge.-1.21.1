@@ -77,6 +77,18 @@ public class VoxyNeoForgeConfig {
                      "Inspired by Distant Horizons' earth curvature feature")
             .defineInRange("earthCurveRatio", 0, 0, 5000);
 
+    // FakeSight integration
+    private static final ModConfigSpec.BooleanValue ENABLE_EXTENDED_REQUEST_DISTANCE = BUILDER
+            .comment("Enable FakeSight-style extended chunk requests",
+                     "When enabled, Voxy reports a larger render/request distance so the server sends more chunks for LOD ingestion.")
+            .define("enableExtendedRequestDistance", true);
+
+    private static final ModConfigSpec.IntValue REQUEST_DISTANCE = BUILDER
+            .comment("FakeSight request distance in chunks",
+                     "This is the chunk distance reported to the server/integrated server.",
+                     "Large values increase server/network/client load. Recommended: 32-64.")
+            .defineInRange("requestDistance", 48, 8, 127);
+
     // Debug settings
     private static final ModConfigSpec.BooleanValue RENDER_STATISTICS = BUILDER
             .comment("Show render statistics in F3 debug screen",
@@ -107,6 +119,8 @@ public class VoxyNeoForgeConfig {
         VoxyConfig.CONFIG.dontUseSodiumBuilderThreads = DONT_USE_SODIUM_BUILDER_THREADS.get();
         VoxyConfig.CONFIG.lodBoundaryBuffer = LOD_BOUNDARY_BUFFER.get();
         VoxyConfig.CONFIG.earthCurveRatio = EARTH_CURVE_RATIO.get();
+        VoxyConfig.CONFIG.enableExtendedRequestDistance = ENABLE_EXTENDED_REQUEST_DISTANCE.get();
+        VoxyConfig.CONFIG.requestDistance = REQUEST_DISTANCE.get();
 
         // RenderStatistics is a runtime-only setting (not saved to JSON)
         RenderStatistics.enabled = RENDER_STATISTICS.get();
@@ -172,5 +186,13 @@ public class VoxyNeoForgeConfig {
 
     public static int getEarthCurveRatio() {
         return EARTH_CURVE_RATIO.get();
+    }
+
+    public static boolean isExtendedRequestDistanceEnabled() {
+        return ENABLE_EXTENDED_REQUEST_DISTANCE.get();
+    }
+
+    public static int getRequestDistance() {
+        return REQUEST_DISTANCE.get();
     }
 }
