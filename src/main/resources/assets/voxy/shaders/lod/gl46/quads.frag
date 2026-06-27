@@ -77,27 +77,6 @@ vec2 getBaseUV() {
     return modelUV + (vec2(face>>1, face&1u) * (1.0/(vec2(3.0, 2.0)*256.0)));
 }
 
-#ifdef TRANSLUCENT
-float computeTranslucentHandoffFade() {
-    // Vanilla water is normally responsible for the near horizontal render-distance area.
-    // Fade Voxy translucent terrain in only after the horizontal vanilla boundary.
-    // However, when the camera is very high, vanilla/Sodium can stop drawing water
-    // directly below the player because the true 3D distance is too large. The
-    // vertical override keeps Voxy water visible in that case without forcing Voxy
-    // water to overlap vanilla water during normal low-altitude flight.
-    float horizontalDistance = max(abs(fragmentCameraPos.x), abs(fragmentCameraPos.z));
-    float verticalDistance = abs(fragmentCameraPos.y);
-
-    float fadeStart = uVanillaRenderDistance;
-    float fadeEnd = uVanillaRenderDistance + uTranslucentFadeWidth;
-
-    float horizontalFade = smoothstep(fadeStart, fadeEnd, horizontalDistance);
-    float verticalFade = smoothstep(fadeStart, fadeEnd, verticalDistance);
-
-    return max(horizontalFade, verticalFade);
-}
-#endif
-
 
 #ifdef PATCHED_SHADER
 struct VoxyFragmentParameters {
@@ -132,6 +111,42 @@ vec4 computeColour(vec2 texturePos, vec4 colour) {
     return (colour * uint2vec4RGBA(interData.y)) + vec4(0,0,0,float(interData.w&0xFFu)/255);
 }
 
+#endif
+
+
+#ifdef TRANSLUCENT
+float computeVanillaWaterHandoffFade() {
+    // fragmentCameraPos is relative to the 32-block render section origin;
+    // cameraSubPos is the camera position inside that same 32-block section.
+    // Use camera-relative 3D distance for the high-altitude case, but use a
+    // chunk-snapped Chebyshev distance for the horizontal vanilla/LOD handoff.
+    // Vanilla/Sodium chunk ownership changes by chunk columns, not by a smooth
+    // circular radius. A circular handoff causes either overlap or holes along
+    // the vanilla/Voxy water boundary.
+    vec3 cameraRelative = fragmentCameraPos - cameraSubPos;
+
+    ivec2 cameraChunkLocal = ivec2(floor(cameraSubPos.xz / 16.0));
+    ivec2 fragmentChunkLocal = ivec2(floor(fragmentCameraPos.xz / 16.0));
+    ivec2 relativeChunk = fragmentChunkLocal - cameraChunkLocal;
+
+    float vanillaChunks = max(1.0, floor(uVanillaRenderDistance / 16.0));
+    float chunkDistance = float(max(abs(relativeChunk.x), abs(relativeChunk.y)));
+    float fadeWidthChunks = max(1.0, uTranslucentFadeWidth / 16.0);
+
+    // 0 inside vanilla-owned chunk columns, 1 outside the vanilla handoff band.
+    float chunkFade = smoothstep(vanillaChunks + 0.25,
+                                 vanillaChunks + 0.25 + fadeWidthChunks,
+                                 chunkDistance);
+
+    // At high altitude vanilla translucent water may disappear even for x/z-near
+    // chunks because the section is far in true 3D distance. In that case Voxy
+    // must take over, otherwise the old circular water hole returns.
+    float distance3DFade = smoothstep(uVanillaRenderDistance,
+                                      uVanillaRenderDistance + uTranslucentFadeWidth,
+                                      length(cameraRelative));
+
+    return max(chunkFade, distance3DFade);
+}
 #endif
 
 
@@ -210,7 +225,8 @@ void main() {
     #ifndef PATCHED_SHADER
     colour = computeColour(texPos, colour);
     #ifdef TRANSLUCENT
-    colour.a *= computeTranslucentHandoffFade();
+    float fade = computeVanillaWaterHandoffFade();
+    colour.a *= fade;
     if (colour.a <= 0.0039f) {
         discard;
         return;
@@ -246,7 +262,8 @@ void main() {
     uint face = getFace();
     face ^= uint((face&1u)!=uint(gl_FrontFacing!=((face>>1)!=0u)));
     #ifdef TRANSLUCENT
-    colour.a *= computeTranslucentHandoffFade();
+    float fade = computeVanillaWaterHandoffFade();
+    colour.a *= fade;
     if (colour.a <= 0.0039f) {
         discard;
         return;
