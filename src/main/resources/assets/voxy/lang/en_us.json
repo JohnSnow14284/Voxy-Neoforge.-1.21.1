@@ -62,7 +62,11 @@
 
   "voxy.sodium.option.lod_boundary_buffer": "LOD Boundary Overlap",
   "voxy.sodium.option.lod_boundary_buffer.tooltip": "Controls overlap between vanilla chunks and LODs. Higher = smoother transitions when flying fast, but slight overdraw.",
-
+  "voxy.config.fakesight": "Extended Chunk Request",
+  "voxy.config.fakesight.enabled": "Enable Extended Chunk Request",
+  "voxy.config.fakesight.enabled.tooltip": "Request chunks beyond vanilla render distance from the server for LOD ingestion",
+  "voxy.config.fakesight.distance": "Request Distance",
+  "voxy.config.fakesight.distance.tooltip": "Chunk distance to request from the server (8-127 chunks)"
   "voxy.sodium.option.render_statistics": "Debug Statistics",
   "voxy.sodium.option.render_statistics.tooltip": "Show LOD render statistics in the F3 debug screen",
 
