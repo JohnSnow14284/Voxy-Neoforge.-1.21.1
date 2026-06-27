@@ -111,14 +111,22 @@ void traverse(in UnpackedNode node) {
 
         //Only decend if not a root node
         if (node.lodLevel!=0 && shouldDecend()) {
-            if (hasChildren(node)) {
+            if (hasChildren(node) && !childListIsEmpty(node)) {
                 //printf("A");
                 enqueueChildren(node);
             } else {
                 //printf("B");
                 addRequest(node);
-                // Do not render the coarse parent while the requested children are missing.
-                // It avoids dark water triangles and giant temporary blocks while moving.
+
+                // Fallback rendering: while the child request is still in flight, keep
+                // rendering the coarser parent if it has usable geometry. The previous
+                // behavior intentionally rendered nothing here, which made missing or
+                // delayed child requests visible as hard holes. Keeping the parent until
+                // children arrive trades a short-lived low-detail patch for a persistent
+                // empty patch.
+                if (hasMesh(node)) {
+                    enqueueSelfForRender(node);
+                }
             }
         } else {
             if (hasMesh(node)) {
