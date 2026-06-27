@@ -46,17 +46,35 @@ layout(binding = STATISTICS_BUFFER_BINDING, std430) restrict buffer statisticsBu
 };
 #endif
 
-void addRequest(inout UnpackedNode node) {
-    //printf("Put node decend request");
-    if (!hasRequested(node)) {
-        if (requestQueueIndex.x < requestQueueSize) {//Soft limit
-            uint atomRes = atomicAdd(requestQueueIndex.x, 1);
-            if (atomRes < MAX_REQUEST_QUEUE_SIZE) {//Hard limit
-                //Mark node as having a request submitted to prevent duplicate submissions
-                requestQueue[atomRes] = getRawPos(node);
+void enqueueRequestRaw(inout UnpackedNode node, bool markAsRequested) {
+    if (requestQueueIndex.x < requestQueueSize) {//Soft limit
+        uint atomRes = atomicAdd(requestQueueIndex.x, 1);
+        if (atomRes < MAX_REQUEST_QUEUE_SIZE) {//Hard limit
+            requestQueue[atomRes] = getRawPos(node);
+            if (markAsRequested) {
                 markRequested(node);
             }
         }
+    }
+}
+
+void addRequest(inout UnpackedNode node) {
+    //printf("Put node decend request");
+    if (!hasRequested(node)) {
+        //Mark node as having a request submitted to prevent duplicate submissions
+        enqueueRequestRaw(node, true);
+    }
+}
+
+void addRetryRequest(inout UnpackedNode node) {
+    if (!hasRequested(node)) {
+        enqueueRequestRaw(node, true);
+    } else if ((frameId & 15u) == 0u) {
+        // When a coarse fallback is visible, the original child request may still
+        // be in-flight. Re-submit a throttled request so the CPU side can kick
+        // any missing child mesh jobs again instead of leaving the parent coarse
+        // forever. Do not mark again; the node is already marked requested.
+        enqueueRequestRaw(node, false);
     }
 }
 
@@ -116,7 +134,7 @@ void traverse(in UnpackedNode node) {
                 enqueueChildren(node);
             } else {
                 //printf("B");
-                addRequest(node);
+                addRetryRequest(node);
 
                 // Fallback rendering: while the child request is still in flight, keep
                 // rendering the coarser parent if it has usable geometry. The previous
