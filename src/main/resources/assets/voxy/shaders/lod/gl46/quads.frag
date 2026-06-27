@@ -134,8 +134,10 @@ float computeVanillaWaterHandoffFade() {
     float fadeWidthChunks = max(1.0, uTranslucentFadeWidth / 16.0);
 
     // 0 inside vanilla-owned chunk columns, 1 outside the vanilla handoff band.
-    float chunkFade = smoothstep(vanillaChunks + 0.25,
-                                 vanillaChunks + 0.25 + fadeWidthChunks,
+    const float VANILLA_WATER_SAFETY_MARGIN_CHUNKS = 1.25;
+
+    float chunkFade = smoothstep(vanillaChunks + VANILLA_WATER_SAFETY_MARGIN_CHUNKS,
+                                 vanillaChunks + VANILLA_WATER_SAFETY_MARGIN_CHUNKS + fadeWidthChunks,
                                  chunkDistance);
 
     // At high altitude vanilla translucent water may disappear even for x/z-near
