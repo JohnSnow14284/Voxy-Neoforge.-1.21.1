@@ -24,6 +24,7 @@ import static org.lwjgl.opengl.GL11.GL_ONE;
 import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glDepthMask;
 import static org.lwjgl.opengl.GL11C.GL_NEAREST;
 import static org.lwjgl.opengl.GL11C.GL_RGBA8;
 import static org.lwjgl.opengl.GL14.glBlendFuncSeparate;
@@ -120,7 +121,18 @@ public class NormalRenderPipeline extends AbstractRenderPipeline {
 
         glEnable(GL_BLEND);
         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Voxy is injected during Sodium's CUTOUT terrain pass, before vanilla translucent
+        // terrain such as water is rendered.  If we write Voxy's depth back into the
+        // main depth buffer here, the later vanilla water pass can fail its depth test,
+        // which shows up from high altitude as missing circular river/ocean regions
+        // inside the normal vanilla render distance.  Keep using the source depth buffer
+        // as a cutout test while compositing Voxy colour, but do not modify the vanilla
+        // depth buffer until translucent terrain has had a chance to render.
+        glDepthMask(false);
         AbstractRenderPipeline.transformBlitDepth(this.finalBlit, this.fb.getDepthTex().id, sourceFrameBuffer, viewport, new Matrix4f(viewport.vanillaProjection).mul(viewport.modelView));
+        glDepthMask(true);
+
         glDisable(GL_BLEND);
         //glBlitNamedFramebuffer(this.fbSSAO.id, sourceFrameBuffer, 0,0, viewport.width, viewport.height, 0,0, viewport.width, viewport.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
